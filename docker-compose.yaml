@@ -1,0 +1,94 @@
+version: '3.7'
+services:
+  pg4j:
+    build:
+      context: .
+      dockerfile: ./docker/pg4j/Dockerfile
+    ports:
+      - 8080:8080
+    depends_on:
+      - neo4j
+      - postgres
+    environment:
+      OUTPUT_DIR: /pg4j_output/data
+    entrypoint: /migration/migrate.sh
+    volumes:
+      - ./data/pg4j_output:/pg4j_output
+      - neo4j_data:/var/lib/neo4j/data/
+  neo4j-loader:
+    image: neo4j:5.5
+    volumes:
+      - neo4j_data:/data
+      - ./data/releases/neo4j:/releases/
+    command: >
+      bash -c "neo4j-admin \ 
+      database \
+      load \
+      neo4j \
+      --from-path=/releases/ \
+      --overwrite-destination=true"
+  neo4j:
+    image: neo4j:5.5
+    restart: always
+    environment:
+      - NEO4J_AUTH=none
+      - NEO4J_PLUGINS=["apoc"]
+      - apoc.export.file.enabled=true
+      - apoc.import.file.enabled=true
+      - apoc.import.file.use_neo4j_config=true
+    ports:
+      - 7474:7474
+      - 7687:7687
+    volumes:
+      - neo4j_data:/data
+  jupyter:
+    build:
+      context: .
+      dockerfile: ./docker/jupyter/Dockerfile
+    restart: always
+    ports:
+      - 8888:8888
+    volumes:
+      - ./src/:/home/jovyan/examples
+      - ./user/:/home/jovyan/user
+    environment:
+      NOTEBOOK_ARGS: --NotebookApp.token=''
+      MPS_NEO4J_DSN: neo4j://neo4j@neo4j/neo4j
+      MPS_POSTGRES_DSN: postgresql://mps_user:mps_password@postgres/mps
+      MPS_POSTGRES_SCHEMA: public_release
+  postgres-loader:
+    image: postgres:14
+    environment:
+      PGHOST: 'postgres'
+      PGDATABASE: 'mps'
+      PGUSER: 'mps_user'
+      PGPASSWORD: 'mps_password'
+    volumes:
+      - ./data/releases/postgres:/releases/
+    command: >
+      bash -c "mkdir -p /extracted/ &&
+      tar -zxvf /releases/${POSTGRES_BACKUP_FILE:-public_release.tar.gz} --directory /extracted/ &&
+      psql -d postgres -c 'drop database if exists mps;' &&
+      createdb mps &&
+      psql -f /extracted/*.sql"
+    depends_on:
+      postgres:
+        condition: service_healthy
+  postgres:
+    image: postgres:14
+    environment:
+      POSTGRES_DB: 'mps'
+      POSTGRES_USER: 'mps_user'
+      POSTGRES_PASSWORD: 'mps_password'
+    ports:
+      - 7777:5432
+    volumes:
+      - pg_data:/var/lib/postgresql/data/
+    healthcheck:
+      test: pg_isready -U backend_user -d backend_db
+      interval: 10s
+      timeout: 3s
+      retries: 3
+volumes:
+  pg_data:
+  neo4j_data:

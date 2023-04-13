@@ -1,0 +1,4 @@
+---
+# Exclude ingestion tables
+table_exclude:
+  - "^jcap_"
