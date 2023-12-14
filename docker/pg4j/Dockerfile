@@ -7,7 +7,7 @@ RUN echo 'deb https://debian.neo4j.com stable 5' | tee -a /etc/apt/sources.list.
 RUN apt-get update && apt-get install -y \
     postgresql-client neo4j \
     && rm -rf /var/lib/apt/lists/*
-
-RUN pip install pg4j
+RUN pip uninstall pg4j
+RUN pip install pg4j==0.1.4 --no-cache-dir
 
 COPY docker/pg4j/migration /migration

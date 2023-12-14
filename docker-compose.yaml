@@ -1,4 +1,4 @@
-version: '3.7'
+version: "3.7"
 services:
   pg4j:
     build:
@@ -6,9 +6,6 @@ services:
       dockerfile: ./docker/pg4j/Dockerfile
     ports:
       - 8080:8080
-    depends_on:
-      - neo4j
-      - postgres
     environment:
       OUTPUT_DIR: /pg4j_output/data
     entrypoint: /migration/migrate.sh
@@ -16,7 +13,7 @@ services:
       - ./data/pg4j_output:/pg4j_output
       - neo4j_data:/var/lib/neo4j/data/
   neo4j-loader:
-    image: neo4j:5.5
+    image: neo4j:latest
     volumes:
       - neo4j_data:/data
       - ./data/releases/neo4j:/releases/
@@ -28,7 +25,7 @@ services:
       --from-path=/releases/ \
       --overwrite-destination=true"
   neo4j:
-    image: neo4j:5.5
+    image: neo4j:latest
     restart: always
     environment:
       - NEO4J_AUTH=none
@@ -59,10 +56,10 @@ services:
   postgres-loader:
     image: postgres:14
     environment:
-      PGHOST: 'postgres'
-      PGDATABASE: 'mps'
-      PGUSER: 'mps_user'
-      PGPASSWORD: 'mps_password'
+      PGHOST: "postgres"
+      PGDATABASE: "mps"
+      PGUSER: "mps_user"
+      PGPASSWORD: "mps_password"
     volumes:
       - ./data/releases/postgres:/releases/
     command: >
@@ -77,9 +74,9 @@ services:
   postgres:
     image: postgres:14
     environment:
-      POSTGRES_DB: 'mps'
-      POSTGRES_USER: 'mps_user'
-      POSTGRES_PASSWORD: 'mps_password'
+      POSTGRES_DB: "mps"
+      POSTGRES_USER: "mps_user"
+      POSTGRES_PASSWORD: "mps_password"
     ports:
       - 7777:5432
     volumes:

@@ -4,6 +4,8 @@
 NEO4J_COMMAND=${NEO4J_COMMAND:-"neo4j-admin"}
 SCHEMA=${SCHEMA:-'public_release'}
 OUTPUT_DIR=${OUTPUT_DIR:-'../../data/pg4j_output'}
+ENVFILE=${ENVFILE:-'docker.env'}
+SQL_TEMPLATE=${SQL_TEMPLATE:-''}
 
 # Check if NEO4J_ID is set and update Neo4j variables if it is
 if [ ! -z "$NEO4J_ID" ]; then
@@ -25,25 +27,30 @@ function dump_data {
     mkdir -p $DIR/sql/nodes
     mkdir -p $OUTPUT_DIR
     
-    # Replace schema name in SQL template files and write them to the SQL directory
-    for sql_template_file in $DIR/sql_templates/edges/*; do
-        sed "s/\"SCHEMA\"/\"$SCHEMA\"/g" "$sql_template_file" > "$DIR/sql/edges/$(basename "$sql_template_file")"
-    done
-    
-    for sql_template_file in $DIR/sql_templates/nodes/*; do
-        sed "s/\"SCHEMA\"/\"$SCHEMA\"/g" "$sql_template_file" > "$DIR/sql/nodes/$(basename "$sql_template_file")"
-    done
+    # check if sql_template should be used and set ADDED_ARGS accordingly
+    ADDED_ARGS=""
+    # check if sql_template equals yes
+    if [ "$SQL_TEMPLATE" = "yes" ]; then
+        echo "Using SQL template: $SQL_TEMPLATE"
+        # Replace schema name in SQL template files and write them to the SQL directory
+        for sql_template_file in $DIR/sql_templates/edges/*; do
+            sed "s/\"SCHEMA\"/\"$SCHEMA\"/g" "$sql_template_file" > "$DIR/sql/edges/$(basename "$sql_template_file")"
+        done
+        
+        for sql_template_file in $DIR/sql_templates/nodes/*; do
+            sed "s/\"SCHEMA\"/\"$SCHEMA\"/g" "$sql_template_file" > "$DIR/sql/nodes/$(basename "$sql_template_file")"
+        done
+        ADDED_ARGS="--sql-template $SQL_TEMPLATE --read"
+    fi
     
     # Dump data from PostgreSQL database
     echo "Dumping data from PostgreSQL database..."
     python -m pg4j dump \
         --schema $SCHEMA \
-        --config $DIR/docker.env \
+        --config $DIR/$ENVFILE \
         --output $OUTPUT_DIR \
         --mapping-input $DIR/caltech.yaml \
-        --read \
-        --sql $DIR/sql \
-        --overwrite
+        --overwrite $ADDED_ARGS
     
     # Log success message
     echo "Dump completed successfully."

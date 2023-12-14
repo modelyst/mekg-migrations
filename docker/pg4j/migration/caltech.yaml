@@ -1,4 +1,8 @@
 ---
 # Exclude ingestion tables
-table_exclude:
-  - "^jcap_"
+table_include:
+  - "^jcap"
+column_mapping:
+  default:
+    exclude:
+      - yaml_dict

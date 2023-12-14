@@ -1,6 +1,7 @@
 # mekg-migrations
 Code for instantiating and migrating Materials Provenance Store (MPS) and Materials Experiment Knowledge Graph (MEKG) databases. Please see the corresponding MEKG and MPS papers for additional details.
 
+A video detailing a walkthrough of the data within MEKG can be found in [videos/graph_visualization_aps.mp4](videos/graph_visualization_aps.mp4). This video was produced using the [Neo4j Bloom Application](https://neo4j.com/product/bloom/).
 ## Overview
 The code in this repository was used for several key database setup and metric generation tasks:
 
@@ -92,6 +93,7 @@ docker-compose up jupyter -d
 ```
 
 `-d` is appended here to start the servers in detached mode to run the servers in the background.
+
 
 
 #### Connecting to Jupyter
